@@ -70,15 +70,16 @@ for i in range(0, args.iter):
 		b_gt[label==l] = label_colours[l,2]
 
 	rgb = np.zeros((ind.shape[0], ind.shape[1], 3))
-	rgb[:,:,0] = r/255.0
-	rgb[:,:,1] = g/255.0
-	rgb[:,:,2] = b/255.0
+	rgb[:,:,0] = r#/255.0
+	rgb[:,:,1] = g#/255.0
+	rgb[:,:,2] = b#/255.0
 	rgb_gt = np.zeros((ind.shape[0], ind.shape[1], 3))
-	rgb_gt[:,:,0] = r_gt/255.0
-	rgb_gt[:,:,1] = g_gt/255.0
-	rgb_gt[:,:,2] = b_gt/255.0
+	rgb_gt[:,:,0] = r_gt#/255.0
+	rgb_gt[:,:,1] = g_gt#/255.0
+	rgb_gt[:,:,2] = b_gt#/255.0
 
-	image = image/255.0
+	image = image#/255.0
+        print image
 
 	image = np.transpose(image, (1,2,0))
 	output = np.transpose(output, (1,2,0))

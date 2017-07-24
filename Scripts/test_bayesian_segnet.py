@@ -11,7 +11,7 @@ import cv2
 import sys
 
 # Make sure that caffe is on the python path:
-caffe_root = '/SegNet/caffe-segnet/' 			# Change this to the absolute directoy to SegNet Caffe
+caffe_root = '/work/sagarj/Work/caffe-segnet-cudnn5/'# Change this to the absolute directoy to SegNet Caffe
 sys.path.insert(0, caffe_root + 'python')
 
 import caffe
@@ -36,9 +36,9 @@ label_colours = cv2.imread(args.colours).astype(np.uint8)
 
 with open(args.data) as f:
     for line in f:
-        input_image_file, ground_truth_file = line.split()
+        input_image_file = line.strip()
 	input_image_raw = caffe.io.load_image(input_image_file)
-	ground_truth = cv2.imread(ground_truth_file, 0)
+	ground_truth = cv2.imread(input_image_file, 0)
 
 	input_image = caffe.io.resize_image(input_image_raw, (input_shape[2],input_shape[3]))
 	input_image = input_image*255
@@ -73,22 +73,23 @@ with open(args.data) as f:
 	max_average_unc = np.max(average_unc)
 	max_unc = np.max(uncertainty)
 
-	plt.imshow(input_image_raw,vmin=0, vmax=255)
-	plt.figure()
-	plt.imshow(segmentation_rgb,vmin=0, vmax=255)
-	plt.figure()
-	plt.imshow(gt_rgb,vmin=0, vmax=255)
-	plt.set_cmap('bone_r')
-	plt.figure()
-	plt.imshow(average_unc,vmin=0, vmax=max_average_unc)
-	plt.show()
+	#plt.imshow(input_image_raw,vmin=0, vmax=255)
+	#plt.figure()
+	#plt.imshow(segmentation_rgb,vmin=0, vmax=255)
+	#plt.figure()
+	#plt.imshow(gt_rgb,vmin=0, vmax=255)
+	#plt.set_cmap('bone_r')
+    #plt.figure()
+	#plt.imshow(average_unc,vmin=0, vmax=max_average_unc)
+	#plt.show()
 
 	# uncomment to save results
-	#scipy.misc.toimage(segmentation_rgb, cmin=0.0, cmax=255.0).save(IMAGE_FILE+'_segnet_segmentation.png')
-	#cm = matplotlib.pyplot.get_cmap('bone_r') 
-	#matplotlib.image.imsave(input_image_file+'_segnet_uncertainty.png',average_unc,cmap=cm, vmin=0, vmax=max_average_unc)
 
-	print 'Processed: ', input_image_file
+scipy.misc.toimage(segmentation_rgb, cmin=0.0, cmax=255.0).save(IMAGE_FILE+'_segnet_segmentation.png')
+cm = matplotlib.pyplot.get_cmap('bone_r') 
+matplotlib.image.imsave(input_image_file+'_segnet_uncertainty.png',average_unc,cmap=cm, vmin=0, vmax=max_average_unc)
+
+print 'Processed: ', input_image_file
 
 print 'Success!'
 
