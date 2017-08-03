@@ -9,6 +9,8 @@ import sys
 import time
 import pandas as pd
 import pickle
+from inpaintSegnetZones import inpaintMask
+import multiprocessing as mp
 
 
 # Make sure that caffe is on the python path:
@@ -31,7 +33,12 @@ parser = argparse.ArgumentParser()
 #parser.add_argument('--image', type=str, required=False)
 parser.add_argument('--data', type=str, required=True)
 parser.add_argument('--outDir' , type=str , required=True)
+parser.add_argument('--outFile' , type=str , required=True)
+parser.add_argument('--inPaintDir' , type=str , required=False)
 args = parser.parse_args()
+
+inpaintedDir = args.inPaintDir
+segmentFile = args.outFile
 
 net = caffe.Net(modelDef,
                 modelWeights,
@@ -49,6 +56,10 @@ input_shape = net.blobs['data'].data.shape
 
 segmentedData = {}
 count = 0
+
+#pool = mp.Pool(processes=4)
+
+labels = ['Sky', 'Building', 'Pole','Road_Marking','Road','Pavement','Tree','Sign_Symbol','Fence','Vehicle','Pedestrian', 'Bike']
 
 for k in df:
     ##Horribly bad way of managing data. Please think of something elegant
@@ -79,13 +90,28 @@ for k in df:
         print '%30s' % 'Executed SegNet in ', str((end - start)*1000), 'ms'
         start = time.time()
         segmentation_ind = net.blobs['argmax'].data.copy()
-        segmentedData[k] = segmentation_ind
-        print segmentation_ind
+        segLabels = np.squeeze(segmentation_ind)
+        segmentedData[k] = segLabels
+        print segLabels.shape
         
         print 'Image %d at path %s' , count , imagePath
         
         end = time.time()
         print '%30s' % 'Processed results in ', str((end - start)*1000), 'ms\n'
+        
+        
+        if inpaintedDir != None:
+            start = time.time()
+            for i in range(len(labels)):
+                mask = np.zeros((segLabels.shape[0],segLabels.shape[1]), np.uint8)
+                mask[np.where(segLabels == i)] = 254
+                #pool.apply_async(impaintMask, (imagePath , mask , inpaintedDir , labels[i]))
+                inpaintMask(imagePath , mask , inpaintedDir , labels[i])
+            end = time.time()
+            print '%30s' % 'Processed inpainting ', str((end - start)*1000), 'ms\n'
+                
+            
+            
 
         #cv2.imwrite(name, segmentation_rgb*255)
 
