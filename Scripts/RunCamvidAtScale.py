@@ -61,22 +61,25 @@ count = 0
 
 labels = ['Sky', 'Building', 'Pole','Road_Marking','Road','Pavement','Tree','Sign_Symbol','Fence','Vehicle','Pedestrian', 'Bike']
 
-for k in df:
+for k1 in df:
     ##Horribly bad way of managing data. Please think of something elegant
     imagesDict = {}
-    imagesDict[k] = df[k]['origPath']
-    t5Keys = df[k]['Top5Keys'][0]
-    t5Paths = df[k]['Top5Paths'][0]
+    imagesDict[k1[1]['key']] = k1[1]['path']
+    
+    ##Uncommend this for top Down pipeline for evaluating differences between retreived and original images
+    #imagesDict[k1] = df[k1]['origPath']
+    #t5Keys = df[k1]['Top5Keys'][0]
+    #t5Paths = df[k1]['Top5Paths'][0]
     #print t5Keys , t5Paths
-    for k in range(len(t5Keys)):
-        imagesDict[t5Keys[k]] = t5Paths[k]
+    #for k in range(len(t5Keys)):
+    #    imagesDict[t5Keys[k]] = t5Paths[k]
     
     #print imagesDict
-    for k in imagesDict:
-        imagePath = imagesDict[k]
+    for k2 in imagesDict:
+        imagePath = imagesDict[k2]
         input_image_raw = caffe.io.load_image(imagePath)
         count+=1
-        name = args.outDir + "/" + k + ".png"
+        name = args.outDir + "/" + k2 + ".png"
         start = time.time()
         input_image = caffe.io.resize_image(input_image_raw, (input_shape[2],input_shape[3]))
         input_image = input_image*255
@@ -91,7 +94,7 @@ for k in df:
         start = time.time()
         segmentation_ind = net.blobs['argmax'].data.copy()
         segLabels = np.squeeze(segmentation_ind)
-        segmentedData[k] = segLabels
+        segmentedData[k2] = segLabels
         print segLabels.shape
         
         print 'Image %d at path %s' , count , imagePath
