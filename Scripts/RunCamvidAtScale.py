@@ -9,7 +9,7 @@ import sys
 import time
 import pandas as pd
 import pickle
-from inpaintSegnetZones import inpaintMask
+from inpaintSegnetZones import inpaintMask,computeGLCM
 import multiprocessing as mp
 
 
@@ -55,11 +55,13 @@ label_colours = cv2.imread(color_file).astype('uint8')
 input_shape = net.blobs['data'].data.shape
 
 segmentedData = {}
+textureData = {}
 count = 0
 
 #pool = mp.Pool(processes=4)
 
 labels = ['Sky', 'Building', 'Pole','Road_Marking','Road','Pavement','Tree','Sign_Symbol','Fence','Vehicle','Pedestrian', 'Bike']
+textureLabels = [0,1,4,6]
 
 for k1 in df:
     ##Horribly bad way of managing data. Please think of something elegant
@@ -94,7 +96,8 @@ for k1 in df:
         start = time.time()
         segmentation_ind = net.blobs['argmax'].data.copy()
         segLabels = np.squeeze(segmentation_ind)
-        segmentedData[k2] = segLabels
+        segmentedData[k2] = {}
+        segmentedData[k2]['segnetLabels'] = segLabels
         print segLabels.shape
         
         print 'Image %d at path %s' , count , imagePath
@@ -102,16 +105,19 @@ for k1 in df:
         end = time.time()
         print '%30s' % 'Processed results in ', str((end - start)*1000), 'ms\n'
         
-        
+        start = time.time()
         if inpaintedDir != None:
-            start = time.time()
+            
             for i in range(len(labels)):
                 mask = np.zeros((segLabels.shape[0],segLabels.shape[1]), np.uint8)
-                mask[np.where(segLabels == i)] = 254
+                mask[np.where(segLabels == i)] = 1
                 #pool.apply_async(impaintMask, (imagePath , mask , inpaintedDir , labels[i]))
                 inpaintMask(imagePath , mask , inpaintedDir , labels[i])
-            end = time.time()
-            print '%30s' % 'Processed inpainting ', str((end - start)*1000), 'ms\n'
+                if i in textureLabels:
+                    glcm = computeGLCM(imagePath , mask)
+                    segmentedData[k2][labels[i]] = glcm
+        end = time.time()
+        print '%30s' % 'Processed inpainting 12 labels ', str((end - start)*1000), 'ms\n'
                 
             
             
