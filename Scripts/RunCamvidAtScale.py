@@ -63,10 +63,10 @@ count = 0
 labels = ['Sky', 'Building', 'Pole','Road_Marking','Road','Pavement','Tree','Sign_Symbol','Fence','Vehicle','Pedestrian', 'Bike']
 textureLabels = [0,1,4,6]
 
+imagesDict = {}
 for k1 in df:
     ##Horribly bad way of managing data. Please think of something elegant
-    imagesDict = {}
-    imagesDict[k1[1]['key']] = k1[1]['path']
+    imagesDict[df[k1][1]['key']] = df[k1][1]['path']
     
     ##Uncommend this for top Down pipeline for evaluating differences between retreived and original images
     #imagesDict[k1] = df[k1]['origPath']
@@ -77,52 +77,52 @@ for k1 in df:
     #    imagesDict[t5Keys[k]] = t5Paths[k]
     
     #print imagesDict
-    for k2 in imagesDict:
-        imagePath = imagesDict[k2]
-        input_image_raw = caffe.io.load_image(imagePath)
-        count+=1
-        name = args.outDir + "/" + k2 + ".png"
-        start = time.time()
-        input_image = caffe.io.resize_image(input_image_raw, (input_shape[2],input_shape[3]))
-        input_image = input_image*255
-        input_image = input_image.transpose((2,0,1))
-        input_image = input_image[(2,1,0),:,:]
-        input_image = np.asarray([input_image])
-        input_image = np.repeat(input_image,input_shape[0],axis=0)
-        net.blobs['data'].data[...] = input_image
-        out = net.forward()
-        end = time.time()
-        print '%30s' % 'Executed SegNet in ', str((end - start)*1000), 'ms'
-        start = time.time()
-        segmentation_ind = net.blobs['argmax'].data.copy()
-        segLabels = np.squeeze(segmentation_ind)
-        segmentedData[k2] = {}
-        segmentedData[k2]['segnetLabels'] = segLabels
-        print segLabels.shape
-        
-        print 'Image %d at path %s' , count , imagePath
-        
-        end = time.time()
-        print '%30s' % 'Processed results in ', str((end - start)*1000), 'ms\n'
-        
-        start = time.time()
-        if inpaintedDir != None:
-            
-            for i in range(len(labels)):
-                mask = np.zeros((segLabels.shape[0],segLabels.shape[1]), np.uint8)
-                mask[np.where(segLabels == i)] = 1
-                #pool.apply_async(impaintMask, (imagePath , mask , inpaintedDir , labels[i]))
-                inpaintMask(imagePath , mask , inpaintedDir , labels[i])
-                if i in textureLabels:
-                    glcm = computeGLCM(imagePath , mask)
-                    segmentedData[k2][labels[i]] = glcm
-        end = time.time()
-        print '%30s' % 'Processed inpainting 12 labels ', str((end - start)*1000), 'ms\n'
-                
-            
-            
+for k2 in imagesDict:
+    imagePath = imagesDict[k2]
+    input_image_raw = caffe.io.load_image(imagePath)
+    count+=1
+    name = args.outDir + "/" + k2 + ".png"
+    start = time.time()
+    input_image = caffe.io.resize_image(input_image_raw, (input_shape[2],input_shape[3]))
+    input_image = input_image*255
+    input_image = input_image.transpose((2,0,1))
+    input_image = input_image[(2,1,0),:,:]
+    input_image = np.asarray([input_image])
+    input_image = np.repeat(input_image,input_shape[0],axis=0)
+    net.blobs['data'].data[...] = input_image
+    out = net.forward()
+    end = time.time()
+    print '%30s' % 'Executed SegNet in ', str((end - start)*1000), 'ms'
+    start = time.time()
+    segmentation_ind = net.blobs['argmax'].data.copy()
+    segLabels = np.squeeze(segmentation_ind)
+    segmentedData[k2] = {}
+    segmentedData[k2]['segnetLabels'] = segLabels
+    print segLabels.shape
 
-        #cv2.imwrite(name, segmentation_rgb*255)
+    print 'Image %d at path %s' , count , imagePath
+
+    end = time.time()
+    print '%30s' % 'Processed results in ', str((end - start)*1000), 'ms\n'
+
+    start = time.time()
+    if inpaintedDir != None:
+
+        for i in range(len(labels)):
+            mask = np.zeros((segLabels.shape[0],segLabels.shape[1]), np.uint8)
+            mask[np.where(segLabels == i)] = 1
+            #pool.apply_async(impaintMask, (imagePath , mask , inpaintedDir , labels[i]))
+            inpaintMask(imagePath , mask , inpaintedDir , labels[i])
+            if i in textureLabels:
+                glcm = computeGLCM(imagePath , mask)
+                segmentedData[k2][labels[i]] = glcm
+    end = time.time()
+    print '%30s' % 'Processed inpainting 12 labels ', str((end - start)*1000), 'ms\n'
+
+
+
+
+    #cv2.imwrite(name, segmentation_rgb*255)
 
 with open(args.outDir + segmentFile, 'wb') as handle:
     pickle.dump(segmentedData , handle, protocol=pickle.HIGHEST_PROTOCOL)
